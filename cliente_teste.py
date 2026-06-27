@@ -1,14 +1,21 @@
 import asyncio
 import json
+import logging
+import os
 import sys
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
+# Silencia logs para que a unica saida em stdout seja o JSON final.
+logging.disable(logging.CRITICAL)
+
 
 async def main() -> dict:
     params = StdioServerParameters(command=sys.executable, args=["servidor_mcp.py"])
-    async with stdio_client(params) as (read, write):
+    # Descarta o stderr do servidor MCP (logs do rich) para nao poluir a saida.
+    devnull = open(os.devnull, "w")
+    async with stdio_client(params, errlog=devnull) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
 
